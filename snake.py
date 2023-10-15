@@ -101,9 +101,10 @@ class Snake:
         # 实现自身移动
         update_content = {new_pos: Const.snakeBody}
         if self.map_obj.get(new_pos) != Const.bean:
+            # 删尾
             update_content.update({self.body[0]: Const.floor})
             del self.body[0]
-        
+        # 增头
         self.body.append(new_pos)
         # 返回地图更新结果
         return self.map_obj.update(update_content)
