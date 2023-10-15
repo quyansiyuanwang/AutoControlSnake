@@ -127,12 +127,15 @@ def main():
     m = create_map(4)
     s = Snake((0, 0), m)
     m.beanCreate()
+    
     while True:
         print(m)
         while (toward := keyboard_reflect(input('to'))) is None: pass
+        
         res = s.move(toward)
         if not m.isExist(Const.bean):
             res = m.beanCreate()
+        
         if res != GameState.gameRunning:
             print(res)
             break
