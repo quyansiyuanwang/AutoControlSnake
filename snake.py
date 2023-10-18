@@ -59,7 +59,7 @@ class SnakeMap(list):
         # 推导存在空格地板的行
         line_indexes = [line for line in self if Const.floor in line]
         # 行存在
-        while line_indexes:
+        if line_indexes:
             # 抽取随机行
             random_line = random.choice(line_indexes)
             # 内容为地板的下标
