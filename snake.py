@@ -9,6 +9,7 @@ class Const:
     floor = "0"
     snakeBody = "#"
     bean = "*"
+    snakeHead = '@'
 
 
 class GameState:
@@ -20,7 +21,7 @@ class GameState:
 
 
 class SnakeMap(list):
-    def get(self, position: tuple[int, int]) -> any:
+    def get(self, position):
         """
         用元组实现获取
         :param position: 元组包含xy内容
@@ -46,7 +47,7 @@ class SnakeMap(list):
         filtrate_line = [line for line in self if target in line]
         return not not filtrate_line
 
-    def update(self, changes: dict[tuple[int, int] : any]) -> bool:
+    def update(self, changes) -> bool:
         """
         更新地图内容, 成功/失败 返回 T/F
         :param changes: 字典键为地块，值为替换内容
@@ -94,12 +95,12 @@ class SnakeMap(list):
 
 
 class Snake:
-    def __init__(self, spawn: tuple[int], map_obj: SnakeMap):
+    def __init__(self, spawn, map_obj: SnakeMap):
         self.body = [spawn]
         self.map_obj = map_obj
         self.map_obj.update({spawn: Const.snakeBody})
 
-    def move(self, toward: tuple[int, int]) -> bool:
+    def move(self, toward) -> bool:
         """
         蛇的移动方法，传入方向以移动
         :param toward: 传入移动方向,
@@ -116,7 +117,8 @@ class Snake:
         elif new_pos not in self.map_obj:
             return GameState.crashWall
         # 实现自身移动
-        update_content = {new_pos: Const.snakeBody}
+        update_content = {new_pos: Const.snakeHead}
+        update_content.update({self.body[-1]: Const.snakeBody})
         if self.map_obj.get(new_pos) != Const.bean:
             # 删尾
             update_content.update({self.body[0]: Const.floor})
@@ -129,19 +131,31 @@ class Snake:
 
 
 class SnakeController(threading.Thread):
-    def __init__(self, snake, direction_queue):
+    def __init__(self, snake, _map):
         super().__init__()
         self.snake = snake
-        self.direction_queue = direction_queue
+        self.direction = (1, 0)
+        self.map = _map
 
     def run(self):
         while GameState.flag == GameState.gameRunning:
-            toward = self.direction_queue.get()
-            if toward is not None:
-                GameState.flag = self.snake.move(toward)
-            time.sleep(0.5)
+            if self.direction is not None:
+                GameState.flag = self.snake.move(self.direction)
+            
+            if GameState.flag != GameState.gameRunning:
+                if not self.map.isExist(Const.floor) and not self.map.isExist(Const.bean):
+                    GameState.flag = GameState.mapFull
+                print(GameState.flag)
+                exit()
 
-def keyboard_reflect(key: str) -> tuple[int]:
+            if not self.map.isExist(Const.bean):
+                self.map.beanCreate()
+            
+            print(self.map)
+            time.sleep(0.35)
+            
+
+def keyboard_reflect(key: str):
     refl = {
         "w": (-1, 0), 
         "a": (0, -1), 
@@ -153,39 +167,34 @@ def keyboard_reflect(key: str) -> tuple[int]:
     return ret
 
 
-def create_map(edge_len: int) -> SnakeMap[list[any]]:
+def create_map(edge_len: int):
     return SnakeMap([Const.floor] * edge_len for _ in range(edge_len))
 
 
 def main():
-    m = create_map(4)
+    m = create_map(5)
     s = Snake((0, 0), m)
 
-    direction_queue = Queue()
-    controller = SnakeController(s, direction_queue)
+    controller = SnakeController(s, m)
     controller.start()
-    direction_queue.put((1, 0))
-
+    
+    m.beanCreate()
+    print(m)
+    
     while True:
-        print(m)
         try:
             key_event = keyboard.read_event()
             if key_event.event_type == keyboard.KEY_DOWN:
                 key = key_event.name
                 toward = keyboard_reflect(key)
-                direction_queue.put(toward)
+                controller.direction = toward
         except KeyboardInterrupt:
             break
 
-        if not m.isExist(Const.bean):
-            m.beanCreate()
-
         if GameState.flag != GameState.gameRunning:
-            print(GameState.flag)
             controller.join()
             break
 
 
 if __name__ == "__main__":
     main()
-    print("end")
