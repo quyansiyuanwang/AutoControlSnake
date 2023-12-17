@@ -100,7 +100,7 @@ class Snake:
         self.map_obj = map_obj
         self.map_obj.update({spawn: Const.snakeBody})
 
-    def move(self, toward) -> bool:
+    def move(self, toward) ->'GameState':
         """
         蛇的移动方法，传入方向以移动
         :param toward: 传入移动方向,
@@ -111,7 +111,7 @@ class Snake:
         # 计算新旧位置
         pos = self.body[-1]
         new_pos = tuple(toward[i] + j for i, j in enumerate(pos))
-        # 判断是否撞上自己 / 墙壁
+        # 判断撞上自己 / 墙壁
         if new_pos in self.body:
             return GameState.crashSelf
         elif new_pos not in self.map_obj:
